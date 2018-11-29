@@ -649,6 +649,8 @@ void array_index() {
 // Factor, can be any identifier, number, string, boolean, etc.
 void factor() {
 	struct syntax_node *save = tree_current;
+	accept(0, t_unary, -1);
+
 	if(accept(0, t_identifier, -1)) {
 		array_index();
 		if(accept(0, t_lparen, -1)) { // function call
@@ -660,6 +662,7 @@ void factor() {
 			}
 		}
 	} else if(accept(0, t_lsquare, -1)) {
+		// array
 		if(!accept(OMIT, t_rsquare, -1)) {
 			do {
 				expression();
