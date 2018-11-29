@@ -31,7 +31,7 @@ def game_start():
 		@player_move(p, pos[0], pos[1])
 
 def player_leave_hook(player):
-	remove(playing)
+	@remove(playing, player)
 	check_for_winner() # did someone leaving cause someone to be the only person left?
 
 def check_for_winner():
