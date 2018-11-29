@@ -1,0 +1,77 @@
+var playing = []
+var starting_places = [] # fill this in with starting spots
+
+def place_tile_hook(player, x, y, tile):
+	if player == "fl4shk":
+		@tile_put(x, y, "dirt")	# everything flask places    changes to dirt
+		return false
+	if tile == "water": # disallow water
+		return false
+	return true  # allow tile placement
+
+def use_item_bomb(player, x, y):
+	@obj_add(x, y, "bomb")
+	@timer(5, bomb_explode, x, y)
+	return false # don't use up the item
+
+def game_start():
+	var starts = @clone(starting_places)
+
+	# everyone is playing
+	var playing = @player_who()
+
+	# put them on the playfield
+	for p in playing:
+		# remove starting places from map after they're picked
+		var i = @random(@len(starts))
+		var pos = starts[i]
+		@remove_index(starts, i)
+
+		# put them into that position
+		@player_move(p, pos[0], pos[1])
+
+def player_leave_hook(player):
+	remove(playing)
+	check_for_winner() # did someone leaving cause someone to be the only person left?
+
+def check_for_winner():
+	if len(playing) == 1:							# only one person left?
+		var player = @pop(playing)					# get that last player
+		var name = @player_displayname(player)
+		var wins = @player_load(player, "wins", 0)	# get saved win count
+		@player_save(player, "wins", wins+1)		# increase win count
+		@player_move(player, lobby_x, lobby_y)
+		@say("the winner is "+name)					# announce winner
+		@say("their win count: "+@str(wins+1))		# announce winner's new score
+
+def kill(x, y):
+	# remove players from the game
+	var list = @player_at_xy(x, y)
+	for p in list:
+		@player_move(p, lobby_x, lobby_y)
+		@remove(playing, p)
+	check_for_winner()
+
+def bomb_explode(x, y):
+	@obj_remove(x, y, "bomb")
+
+	var list = []	# list of tiles to clean up
+
+	# explode in a + shape
+	for n = x-2 to x+2:
+		# horizontal
+		@obj_add(n, y, "explosion")
+		@push(list, [n, y])
+		kill(n, y)
+
+		# vertical
+		@obj_add(x, n, "explosion")
+		@push(list, [x, n])
+		kill(x, n)
+
+	@timer(1, bomb_clean, list)
+
+def bomb_clean(tiles):
+	# remove explosions
+	for n in tiles:
+		@obj_remove(n[0], n[1], "explosion")
