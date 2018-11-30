@@ -1,0 +1,1 @@
+gcc ttc.c lexer.c syntax.c -o ttc -g
